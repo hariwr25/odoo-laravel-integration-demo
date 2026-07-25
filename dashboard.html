@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard · Odoo Integration</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            padding: 1.5rem;
+            min-height: 100vh;
+        }
+        .app-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ----- LAYOUT APP (simulasi) ----- */
+        .app-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            border: 1px solid #eef2f6;
+            position: sticky;
+            top: 1.5rem;
+        }
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0 0.5rem 1.5rem 0.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 1.5rem;
+        }
+        .sidebar-brand .logo-icon {
+            width: 2.2rem;
+            height: 2.2rem;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            border-radius: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-brand .logo-icon i { color: white; font-size: 1rem; }
+        .sidebar-brand span { font-weight: 700; font-size: 0.95rem; color: #0f172a; }
+        .sidebar-nav { display: flex; flex-direction: column; gap: 0.3rem; }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 0.8rem;
+            color: #475569;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: 0.15s;
+        }
+        .sidebar-nav a:hover { background: #f8fafc; color: #0f172a; }
+        .sidebar-nav a.active { background: #eef2ff; color: #2563eb; }
+        .sidebar-nav a i { width: 1.1rem; text-align: center; font-size: 0.9rem; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; min-width: 0; }
+
+        /* TOP BAR */
+        .topbar {
+            background: white;
+            border-radius: 1.2rem;
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #eef2f6;
+            margin-bottom: 1.5rem;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; }
+        .topbar-left h1 { font-size: 1.2rem; font-weight: 700; color: #0f172a; }
+        .topbar-left .badge-demo {
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 0.15rem 0.6rem;
+            border-radius: 100px;
+            letter-spacing: 0.3px;
+        }
+        .topbar-right { display: flex; align-items: center; gap: 1rem; }
+        .topbar-right .avatar {
+            width: 2.2rem;
+            height: 2.2rem;
+            background: #dbeafe;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2563eb;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* CARD UTILITY */
+        .card {
+            background: white;
+            border-radius: 1.2rem;
+            border: 1px solid #eef2f6;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        /* STAT CARDS */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 1.2rem;
+            padding: 1.2rem 1rem;
+            border: 1px solid #eef2f6;
+            transition: 0.15s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px -6px rgba(0,0,0,0.06); }
+        .stat-card .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .stat-card .stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600; }
+        .stat-card .stat-value { font-size: 1.6rem; font-weight: 700; color: #0f172a; margin-top: 0.2rem; }
+        .stat-card .stat-sub { font-size: 0.65rem; color: #64748b; margin-top: 0.4rem; }
+        .stat-card .stat-icon {
+            width: 2.2rem;
+            height: 2.2rem;
+            border-radius: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        .stat-card .stat-change { font-size: 0.65rem; font-weight: 500; margin-top: 0.3rem; }
+        .text-green { color: #10b981; }
+        .text-amber { color: #f59e0b; }
+        .text-rose { color: #ef4444; }
+        .bg-blue-50 { background: #eff6ff; }
+        .bg-emerald-50 { background: #ecfdf5; }
+        .bg-amber-50 { background: #fffbeb; }
+        .bg-purple-50 { background: #f5f3ff; }
+        .bg-rose-50 { background: #fff1f2; }
+        .text-blue-500 { color: #3b82f6; }
+        .text-emerald-500 { color: #10b981; }
+        .text-amber-500 { color: #f59e0b; }
+        .text-purple-500 { color: #8b5cf6; }
+        .text-rose-500 { color: #f43f5e; }
+
+        /* GRID LAYOUTS */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 1024px) {
+            .app-layout { flex-direction: column; }
+            .sidebar { width: 100%; position: static; }
+            .grid-3 { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 640px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .grid-3 { grid-template-columns: 1fr; }
+            .stat-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* TABLE */
+        .table-wrap { overflow-x: auto; margin-top: 0.5rem; }
+        table { width: 100%; font-size: 0.85rem; border-collapse: collapse; }
+        th { text-align: left; padding: 0.5rem 0.75rem; font-weight: 600; color: #64748b; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.3px; }
+        td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
+        tr:last-child td { border-bottom: none; }
+
+        /* BACKUP CARD (dark) */
+        .bg-slate-800 { background: #1e293b; }
+        .bg-slate-700\/50 { background: rgba(51, 65, 85, 0.5); }
+        .text-white { color: white; }
+        .text-gray-400 { color: #94a3b8; }
+        .text-gray-500 { color: #64748b; }
+        .text-gray-700 { color: #334155; }
+        .text-gray-800 { color: #1e293b; }
+        .border-gray-100 { border-color: #f1f5f9; }
+
+        .rounded-xl { border-radius: 1rem; }
+        .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+
+        /* progress */
+        .progress-container { width: 100%; }
+        .bg-gray-700 { background: #334155; }
+        .bg-gradient-to-r { background: linear-gradient(to right, #3b82f6, #8b5cf6); }
+        .rounded-full { border-radius: 9999px; }
+        .h-1\.5 { height: 0.375rem; }
+
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .flex-col { flex-direction: column; }
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-3 { margin-top: 0.75rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .text-center { text-align: center; }
+        .text-xs { font-size: 0.7rem; }
+        .text-sm { font-size: 0.8rem; }
+        .text-xl { font-size: 1.25rem; }
+        .font-medium { font-weight: 500; }
+        .font-semibold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
+        .w-full { width: 100%; }
+        .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+        .border-b { border-bottom: 1px solid #eef2f6; }
+        .hover\:bg-gray-50:hover { background: #f8fafc; }
+        .transition { transition: 0.15s; }
+
+        /* button */
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.6rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary:hover { background: #1d4ed8; }
+
+        /* toast */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: #10b981;
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 999;
+        }
+        .toast i { font-size: 1rem; }
+        .toast.error { background: #ef4444; }
+    </style>
+</head>
+<body>
+<div class="app-wrapper">
+
+    <div class="app-layout">
+
+        <!-- ======== SIDEBAR ======== -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="logo-icon"><i class="fas fa-database"></i></div>
+                <span>Odoo Integration</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="active"><i class="fas fa-th-large"></i> Dashboard</a>
+                <a href="#"><i class="fas fa-box"></i> Products</a>
+                <a href="#"><i class="fas fa-cloud-upload-alt"></i> Backup</a>
+                <a href="#"><i class="fas fa-users"></i> Users</a>
+                <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                <a href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+            <div style="margin-top: 2rem; padding: 0.8rem; background: #f8fafc; border-radius: 0.8rem; text-align: center; font-size: 0.6rem; color: #94a3b8;">
+                <i class="fas fa-code"></i> Demo v1.0
+            </div>
+        </aside>
+
+        <!-- ======== MAIN CONTENT ======== -->
+        <main class="main-content">
+
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1>Dashboard <span class="badge-demo"><i class="fas fa-info-circle"></i> DEMO</span></h1>
+                </div>
+                <div class="topbar-right">
+                    <i class="fas fa-bell text-gray-400" style="font-size: 1.1rem;"></i>
+                    <div class="avatar">AD</div>
+                </div>
+            </div>
+
+            <!-- ===== DEMO INFO CARD ===== -->
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 0.8rem; padding: 0.6rem 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-size: 0.8rem; color: #92400e;">
+                <i class="fas fa-info-circle" style="color: #f59e0b;"></i>
+                <span><strong>⚠️ Halaman Demo</strong> — ini hanya tampilan antarmuka dengan data dummy. Untuk source code asli, kunjungi <a href="https://github.com/hariwr25/odoo-laravel-integration" target="_blank" style="color: #2563eb; font-weight: 600;">GitHub</a>.</span>
+            </div>
+
+            <!-- STAT CARDS -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Total Produk</div>
+                            <div class="stat-value">1,247</div>
+                            <div class="stat-change text-green">+12.5% vs last month</div>
+                        </div>
+                        <div class="stat-icon bg-blue-50 text-blue-500"><i class="fas fa-box"></i></div>
+                    </div>
+                    <div class="stat-sub">PostgreSQL · Odoo Pusat</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Data Backup</div>
+                            <div class="stat-value">1,032</div>
+                            <div class="stat-change text-green">82.7% completed</div>
+                        </div>
+                        <div class="stat-icon bg-emerald-50 text-emerald-500"><i class="fas fa-database"></i></div>
+                    </div>
+                    <div class="stat-sub">SQL Server · Kantor Cabang</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Total Nilai</div>
+                            <div class="stat-value" style="font-size: 1.2rem;">Rp 287,6 Jt</div>
+                            <div class="stat-change text-amber">+16.5% vs last month</div>
+                        </div>
+                        <div class="stat-icon bg-amber-50 text-amber-500"><i class="fas fa-rupiah-sign"></i></div>
+                    </div>
+                    <div class="stat-sub">Total inventory value</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Riwayat Backup</div>
+                            <div class="stat-value">48</div>
+                            <div style="display: flex; gap: 0.5rem; margin-top: 0.2rem;">
+                                <span class="text-green" style="font-size:0.65rem;">✓ 42</span>
+                                <span class="text-rose" style="font-size:0.65rem;">✗ 6</span>
+                            </div>
+                        </div>
+                        <div class="stat-icon bg-purple-50 text-purple-500"><i class="fas fa-history"></i></div>
+                    </div>
+                    <div class="stat-sub">Total backup attempts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-value">24</div>
+                            <div class="stat-change text-rose">+3.4% since last month</div>
+                        </div>
+                        <div class="stat-icon bg-rose-50 text-rose-500"><i class="fas fa-users"></i></div>
+                    </div>
+                    <div class="stat-sub">Registered accounts</div>
+                </div>
+            </div>
+
+            <!-- ROW: CHARTS + BACKUP -->
+            <div class="grid-3">
+                <!-- BAR CHART -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <div>
+                            <h3 style="font-size: 0.85rem; font-weight: 600; color: #0f172a;"><i class="fas fa-chart-bar text-blue-500" style="margin-right: 0.3rem;"></i>Top 5 Produk Termahal</h3>
+                            <p style="font-size: 0.65rem; color: #94a3b8;">Berdasarkan harga jual</p>
+                        </div>
+                        <span style="background: #eff6ff; color: #2563eb; font-size: 0.6rem; padding: 0.1rem 0.6rem; border-radius: 100px;">5 Tertinggi</span>
+                    </div>
+                    <canvas id="topProductsChart" height="160"></canvas>
+                </div>
+
+                <!-- PIE CHART -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <div>
+                            <h3 style="font-size: 0.85rem; font-weight: 600; color: #0f172a;"><i class="fas fa-chart-pie text-emerald-500" style="margin-right: 0.3rem;"></i>Distribusi Harga</h3>
+                            <p style="font-size: 0.65rem; color: #94a3b8;">Kategori harga produk</p>
+                        </div>
+                    </div>
+                    <canvas id="priceDistributionChart" height="160"></canvas>
+                    <div style="text-align: center; margin-top: 0.5rem;">
+                        <p style="font-size: 0.9rem; font-weight: 700; color: #0f172a;">Rp 230.750</p>
+                        <p style="font-size: 0.6rem; color: #10b981;">Rata-rata harga produk</p>
+                    </div>
+                </div>
+
+                <!-- BACKUP CARD -->
+                <div class="bg-slate-800 rounded-xl p-4" style="border: 1px solid #334155;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <div style="width: 2.2rem; height: 2.2rem; background: rgba(59,130,246,0.2); border-radius: 0.6rem; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-cloud-upload-alt" style="color: #60a5fa; font-size: 0.9rem;"></i>
+                            </div>
+                            <div>
+                                <h3 style="color: white; font-size: 0.85rem; font-weight: 600;">Backup System</h3>
+                                <p style="color: #94a3b8; font-size: 0.65rem;">Odoo → SQL Server</p>
+                            </div>
+                        </div>
+                        <span style="background: rgba(16,185,129,0.2); color: #34d399; font-size: 0.6rem; padding: 0.1rem 0.6rem; border-radius: 100px;">Active</span>
+                    </div>
+
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 0.2rem;">
+                            <span style="color: #94a3b8;">Progress</span>
+                            <span style="color: white; font-weight: 600;">82.7%</span>
+                        </div>
+                        <div style="width: 100%; background: #334155; border-radius: 9999px; height: 0.3rem;">
+                            <div style="width: 82.7%; background: linear-gradient(to right, #3b82f6, #8b5cf6); height: 0.3rem; border-radius: 9999px;"></div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <div style="background: rgba(51,65,85,0.5); border-radius: 0.6rem; padding: 0.4rem; text-align: center;">
+                            <p style="font-size: 1.2rem; font-weight: 700; color: white;">1,032</p>
+                            <p style="font-size: 0.6rem; color: #94a3b8;">Backup Data</p>
+                        </div>
+                        <div style="background: rgba(51,65,85,0.5); border-radius: 0.6rem; padding: 0.4rem; text-align: center;">
+                            <p style="font-size: 1.2rem; font-weight: 700; color: white;">215</p>
+                            <p style="font-size: 0.6rem; color: #94a3b8;">Pending</p>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" style="width: 100%; justify-content: center; background: #2563eb; padding: 0.5rem;">
+                        <i class="fas fa-sync-alt"></i> Backup Now
+                    </button>
+                    <p style="text-align: center; color: #64748b; font-size: 0.6rem; margin-top: 0.5rem;">Last backup: 2 hours ago</p>
+                </div>
+            </div>
+
+            <!-- ROW: TOP PRODUCTS + RECEIPTS -->
+            <div class="grid-2">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <div>
+                            <h3 style="font-size: 0.85rem; font-weight: 600; color: #0f172a;"><i class="fas fa-chart-line text-blue-500" style="margin-right: 0.3rem;"></i>Top Products</h3>
+                            <p style="font-size: 0.65rem; color: #94a3b8;">Best selling items this month</p>
+                        </div>
+                        <a href="#" style="color: #2563eb; font-size: 0.7rem;">View all →</a>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9;">
+                            <span style="font-size: 0.8rem; color: #1e293b;">1. Laptop Asus ROG Zephyrus</span>
+                            <span style="font-size: 0.8rem; font-weight: 600;">Rp 24.500.000</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9;">
+                            <span style="font-size: 0.8rem; color: #1e293b;">2. iPhone 15 Pro Max</span>
+                            <span style="font-size: 0.8rem; font-weight: 600;">Rp 18.200.000</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9;">
+                            <span style="font-size: 0.8rem; color: #1e293b;">3. Samsung Galaxy S24 Ultra</span>
+                            <span style="font-size: 0.8rem; font-weight: 600;">Rp 15.800.000</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9;">
+                            <span style="font-size: 0.8rem; color: #1e293b;">4. Sony WH-1000XM5</span>
+                            <span style="font-size: 0.8rem; font-weight: 600;">Rp 4.500.000</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 0.4rem 0;">
+                            <span style="font-size: 0.8rem; color: #1e293b;">5. Apple Watch Series 9</span>
+                            <span style="font-size: 0.8rem; font-weight: 600;">Rp 6.200.000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <div>
+                            <h3 style="font-size: 0.85rem; font-weight: 600; color: #0f172a;"><i class="fas fa-truck text-blue-500" style="margin-right: 0.3rem;"></i>Receipts</h3>
+                            <p style="font-size: 0.65rem; color: #94a3b8;">Penerimaan barang dari Odoo</p>
+                        </div>
+                        <i class="fas fa-arrow-right" style="color: #cbd5e1; font-size: 0.7rem;"></i>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9;">
+                            <div>
+                                <p style="font-size: 0.8rem; font-weight: 500; color: #1e293b;">INV-2026-001</p>
+                                <p style="font-size: 0.6rem; color: #94a3b8;">12 Apr 2026</p>
+                            </div>
+                            <span style="background: #dcfce7; color: #15803d; font-size: 0.6rem; padding: 0.1rem 0.6rem; border-radius: 100px;">Done</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9;">
+                            <div>
+                                <p style="font-size: 0.8rem; font-weight: 500; color: #1e293b;">INV-2026-002</p>
+                                <p style="font-size: 0.6rem; color: #94a3b8;">10 Apr 2026</p>
+                            </div>
+                            <span style="background: #dbeafe; color: #1d4ed8; font-size: 0.6rem; padding: 0.1rem 0.6rem; border-radius: 100px;">Ready</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9;">
+                            <div>
+                                <p style="font-size: 0.8rem; font-weight: 500; color: #1e293b;">INV-2026-003</p>
+                                <p style="font-size: 0.6rem; color: #94a3b8;">8 Apr 2026</p>
+                            </div>
+                            <span style="background: #fef3c7; color: #92400e; font-size: 0.6rem; padding: 0.1rem 0.6rem; border-radius: 100px;">Waiting</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0;">
+                            <div>
+                                <p style="font-size: 0.8rem; font-weight: 500; color: #1e293b;">INV-2026-004</p>
+                                <p style="font-size: 0.6rem; color: #94a3b8;">5 Apr 2026</p>
+                            </div>
+                            <span style="background: #dcfce7; color: #15803d; font-size: 0.6rem; padding: 0.1rem 0.6rem; border-radius: 100px;">Done</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLES: Odoo Products & Backup Data -->
+            <div class="grid-2">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                        <div>
+                            <h3 style="font-size: 0.85rem; font-weight: 600; color: #0f172a;"><i class="fas fa-database text-blue-500" style="margin-right: 0.3rem;"></i>Produk Odoo</h3>
+                            <p style="font-size: 0.6rem; color: #94a3b8;">PostgreSQL · Kantor Pusat</p>
+                        </div>
+                        <span style="background: #f1f5f9; color: #475569; font-size: 0.6rem; padding: 0.1rem 0.6rem; border-radius: 100px;">8 items</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>ID</th><th>Nama</th><th style="text-align:right;">Harga</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#P-001</td><td>Laptop Asus ROG Zephyrus</td><td style="text-align:right; font-weight:600;">Rp 24.500.000</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#P-002</td><td>iPhone 15 Pro Max</td><td style="text-align:right; font-weight:600;">Rp 18.200.000</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#P-003</td><td>Samsung Galaxy S24 Ultra</td><td style="text-align:right; font-weight:600;">Rp 15.800.000</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#P-004</td><td>Sony WH-1000XM5</td><td style="text-align:right; font-weight:600;">Rp 4.500.000</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#P-005</td><td>Apple Watch Series 9</td><td style="text-align:right; font-weight:600;">Rp 6.200.000</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#P-006</td><td>MacBook Pro M3</td><td style="text-align:right; font-weight:600;">Rp 32.000.000</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                        <div>
+                            <h3 style="font-size: 0.85rem; font-weight: 600; color: #0f172a;"><i class="fas fa-archive text-emerald-500" style="margin-right: 0.3rem;"></i>Data Backup</h3>
+                            <p style="font-size: 0.6rem; color: #94a3b8;">SQL Server · Kantor Cabang</p>
+                        </div>
+                        <span style="background: #f1f5f9; color: #475569; font-size: 0.6rem; padding: 0.1rem 0.6rem; border-radius: 100px;">6 items</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>ID</th><th>Nama</th><th style="text-align:right;">Harga</th><th>Waktu</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#1</td><td>Laptop Asus ROG Zephyrus</td><td style="text-align:right; font-weight:600;">Rp 24.500.000</td><td style="color:#94a3b8; font-size:0.6rem;">12/04/26 14:30</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#2</td><td>iPhone 15 Pro Max</td><td style="text-align:right; font-weight:600;">Rp 18.200.000</td><td style="color:#94a3b8; font-size:0.6rem;">12/04/26 14:28</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#3</td><td>Samsung Galaxy S24 Ultra</td><td style="text-align:right; font-weight:600;">Rp 15.800.000</td><td style="color:#94a3b8; font-size:0.6rem;">12/04/26 14:25</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#4</td><td>Sony WH-1000XM5</td><td style="text-align:right; font-weight:600;">Rp 4.500.000</td><td style="color:#94a3b8; font-size:0.6rem;">12/04/26 14:20</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#5</td><td>Apple Watch Series 9</td><td style="text-align:right; font-weight:600;">Rp 6.200.000</td><td style="color:#94a3b8; font-size:0.6rem;">12/04/26 14:15</td></tr>
+                                <tr><td style="color:#94a3b8; font-size:0.7rem;">#6</td><td>MacBook Pro M3</td><td style="text-align:right; font-weight:600;">Rp 32.000.000</td><td style="color:#94a3b8; font-size:0.6rem;">12/04/26 14:10</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div style="text-align: center; margin-top: 2rem; font-size: 0.65rem; color: #94a3b8; border-top: 1px solid #eef2f6; padding-top: 1rem;">
+                <i class="fas fa-code"></i> Demo Dashboard · Odoo Laravel Integration
+                <span style="margin: 0 0.5rem;">·</span>
+                <a href="https://github.com/hariwr25/odoo-laravel-integration" target="_blank" style="color: #2563eb; text-decoration: none;">Source Code</a>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- TOAST SIMULASI -->
+<div class="toast">
+    <i class="fas fa-check-circle"></i>
+    <span>Dashboard loaded successfully (demo)</span>
+</div>
+
+<!-- CHART SCRIPTS -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // BAR CHART
+        const ctx1 = document.getElementById('topProductsChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ['ROG Zephyrus', 'iPhone 15 Pro', 'Samsung S24', 'WH-1000XM5', 'Apple Watch 9'],
+                datasets: [{
+                    label: 'Harga (Rp)',
+                    data: [24500000, 18200000, 15800000, 4500000, 6200000],
+                    backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'],
+                    borderRadius: 6,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { drawBorder: false, color: 'rgba(0,0,0,0.03)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // PIE CHART
+        const ctx2 = document.getElementById('priceDistributionChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Murah (< Rp100)', 'Sedang (Rp100-500)', 'Mahal (> Rp500)'],
+                datasets: [{
+                    data: [320, 540, 387],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
+                }
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

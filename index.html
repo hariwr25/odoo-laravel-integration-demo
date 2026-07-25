@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login · Odoo Integration</title>
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Font (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        /* ... semua style tetap sama seperti sebelumnya ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(145deg, #f0f4ff 0%, #e6edfa 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            margin: 0;
+        }
+
+        .guest-wrapper {
+            width: 100%;
+            max-width: 460px;
+            margin: 0 auto;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 20, 60, 0.25), 
+                        0 4px 18px 0 rgba(0, 0, 0, 0.04);
+            padding: 2.5rem 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        @media (min-width: 768px) {
+            .auth-card {
+                padding: 3rem 2.8rem;
+            }
+        }
+
+        .logo-wrapper {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-icon {
+            width: 3.5rem;
+            height: 3.5rem;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem auto;
+            box-shadow: 0 8px 16px -6px rgba(37, 99, 235, 0.3);
+        }
+
+        .logo-icon i {
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .auth-card h2 {
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: #0b1e3a;
+            letter-spacing: -0.02em;
+        }
+
+        .auth-card .subhead {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 0.4rem;
+        }
+
+        .form-label i {
+            color: #94a3b8;
+            margin-right: 0.2rem;
+            font-size: 0.8rem;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 0.85rem 1.2rem;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 1rem;
+            font-size: 0.95rem;
+            transition: 0.2s;
+            color: #0f172a;
+            font-weight: 450;
+            outline: none;
+        }
+
+        .auth-input:focus {
+            border-color: #3b82f6;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+        }
+
+        .auth-input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .flex-between {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 1.75rem;
+        }
+
+        .remember-wrap {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .remember-wrap input[type="checkbox"] {
+            width: 1.1rem;
+            height: 1.1rem;
+            accent-color: #2563eb;
+            border-radius: 0.25rem;
+            border: 1.5px solid #cbd5e1;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .remember-wrap input[type="checkbox"]:checked {
+            border-color: #2563eb;
+        }
+
+        .remember-wrap span {
+            margin-left: 0.6rem;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+
+        .forgot-link {
+            font-size: 0.9rem;
+            color: #2563eb;
+            font-weight: 500;
+            text-decoration: none;
+            transition: 0.15s;
+        }
+
+        .forgot-link:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        .auth-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            border: none;
+            padding: 0.9rem 1.5rem;
+            border-radius: 1rem;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            transition: 0.2s ease;
+            box-shadow: 0 8px 18px -6px rgba(37, 99, 235, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 24px -8px rgba(37, 99, 235, 0.4);
+            background: linear-gradient(135deg, #1d4ed8, #4338ca);
+        }
+
+        .auth-btn:active {
+            transform: translateY(0px);
+            box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.3);
+        }
+
+        .auth-btn i {
+            font-size: 1rem;
+        }
+
+        .register-footer {
+            text-align: center;
+            margin-top: 1.75rem;
+            font-size: 0.95rem;
+            color: #475569;
+        }
+
+        .register-footer a {
+            color: #2563eb;
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: 0.2rem;
+        }
+
+        .register-footer a:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        .demo-badge-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.75rem;
+        }
+
+        .demo-badge {
+            background: rgba(15, 23, 42, 0.05);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 100px;
+            padding: 0.4rem 1.2rem 0.4rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #1e293b;
+            transition: 0.2s;
+            text-decoration: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .demo-badge i {
+            color: #2563eb;
+            font-size: 0.85rem;
+        }
+
+        .demo-badge:hover {
+            background: rgba(37, 99, 235, 0.08);
+            border-color: #94a3b8;
+            transform: translateY(-1px);
+        }
+
+        .demo-badge .badge-separator {
+            width: 1px;
+            height: 16px;
+            background: rgba(0,0,0,0.08);
+        }
+
+        .demo-badge .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #0f172a;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.15s;
+        }
+
+        .demo-badge .github-link:hover {
+            color: #2563eb;
+        }
+
+        .demo-badge .github-link i {
+            font-size: 0.85rem;
+            color: #1e293b;
+        }
+
+        .demo-badge .github-link:hover i {
+            color: #2563eb;
+        }
+
+        .demo-info {
+            margin-top: 1.5rem;
+            padding: 0.85rem 1rem;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            text-align: center;
+            font-size: 0.82rem;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            backdrop-filter: blur(4px);
+            line-height: 1.5;
+        }
+
+        .demo-info i {
+            color: #f59e0b;
+            font-size: 0.95rem;
+        }
+
+        .demo-info strong {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .text-center { text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="guest-wrapper">
+    <div class="auth-card">
+
+        <!-- Logo & welcome -->
+        <div class="logo-wrapper">
+            <div class="logo-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <h2>Hello! Welcome!</h2>
+            <p class="subhead">Please login to admin Odoo Integration</p>
+        </div>
+
+        <!-- Demo Info -->
+        <div class="demo-info">
+            <i class="fas fa-info-circle"></i>
+            <span>
+                <strong>⚠️ Halaman Demo</strong> — ini hanya tampilan antarmuka dengan data dummy.
+                Untuk melihat source code asli, klik badge di bawah.
+            </span>
+        </div>
+
+        <!-- Login Form dengan JavaScript untuk redirect -->
+        <form id="loginForm" onsubmit="handleLogin(event)" style="margin-top: 1.5rem;">
+            <!-- dummy csrf untuk demo -->
+            <input type="hidden" name="_token" value="demo_token">
+
+            <!-- Email -->
+            <div class="form-group">
+                <label class="form-label"><i class="far fa-envelope"></i> Email / Username *</label>
+                <input type="email" name="email" value="admin@odoo.com" required autofocus
+                       class="auth-input" placeholder="Admin@gmail.com">
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-lock"></i> Password *</label>
+                <input type="password" name="password" required
+                       class="auth-input" placeholder="••••••••" value="demo123">
+            </div>
+
+            <!-- Remember & forgot -->
+            <div class="flex-between">
+                <label class="remember-wrap">
+                    <input type="checkbox" name="remember" checked>
+                    <span>Remember me</span>
+                </label>
+                <a href="#" class="forgot-link">Forgot password?</a>
+            </div>
+
+            <!-- Login Button -->
+            <button type="submit" class="auth-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Sign In</span>
+            </button>
+        </form>
+
+        <!-- Register link -->
+        <div class="register-footer">
+            Don't have an account?
+            <a href="#">Sign up</a>
+        </div>
+
+        <!-- DEMO BADGE + GITHUB LINK -->
+        <div class="demo-badge-wrapper">
+            <a href="https://github.com/hariwr25/odoo-laravel-integration" target="_blank" class="demo-badge" title="Lihat source code di GitHub">
+                <i class="fas fa-code"></i>
+                <span>Demo</span>
+                <span class="badge-separator"></span>
+                <span class="github-link">
+                    <i class="fab fa-github"></i> Source
+                </span>
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<!-- JavaScript untuk handle login tanpa 405 -->
+<script>
+function handleLogin(event) {
+    event.preventDefault(); // Mencegah submit form (yang menyebabkan 405)
+    
+    // Ambil nilai input untuk simulasi validasi
+    const email = document.querySelector('input[name="email"]').value;
+    const password = document.querySelector('input[name="password"]').value;
+    
+    // Validasi sederhana (opsional)
+    if (email && password) {
+        // Redirect ke dashboard.html
+        window.location.href = 'dashboard.html';
+    } else {
+        alert('Silakan isi email dan password!');
+    }
+}
+</script>
+
+</body>
+</html>
