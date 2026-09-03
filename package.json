@@ -1,0 +1,25 @@
+{
+  "name": "odoo-app-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy" : "gh-pages -d ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hariwr25/-odoo-laravel-integration-demo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hariwr25/-odoo-laravel-integration-demo/issues"
+  },
+  "homepage": "https://github.com/hariwr25/-odoo-laravel-integration-demo#readme",
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  }
+}
